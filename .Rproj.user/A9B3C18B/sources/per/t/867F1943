@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1542759288370.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "465622185",
+    "id" : "867F1943",
+    "lastKnownWriteTime" : 1548094346,
+    "last_content_update" : 1548094346,
+    "path" : "~/R/MisProyectos/LICyT/LICyT final/TasaCrecimiento.R",
+    "project_path" : "TasaCrecimiento.R",
+    "properties" : {
+        "cursorPosition" : "157,0",
+        "scrollLine" : "139",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

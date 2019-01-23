@@ -1,0 +1,387 @@
+#Definir el directorio de trabajo
+setwd("C:/Users/Diego Davila/Documents/R/TareaFinal/TFinalMod1")
+#
+#Cargar los datos
+Datos<-read.csv(file="GlobalWoodDensityDatabase.csv", header=TRUE)
+str(Datos)
+head(Datos)
+
+#Crear un subset que solo contemple la famila Fabaceae
+DatosFab <- subset(Datos, Datos$Family =="Fabaceae", select = c("Number","Family", "Binomial", "WoodDensity", "Region","Reference.Number"))
+DatosFab
+
+#Crear un nuevo archivo incluyendo únicamente los datos que corresponden a Fabaceas
+write.csv(DatosFab, "DatosFabaceas.csv")
+DatosFab2<-read.csv("DatosFabaceas.csv", header = TRUE)
+head(DatosFab2)
+
+#Calcular las mediana de la densidad por especie (Solo familia Fabaceae)
+Medianas<-function(x){median=median(x)}
+Medianas<-tapply(DatosFab2$WoodDensity, DatosFab2$Binomial, Medianas)
+head(Medianas)
+
+#El resultado es un "array" por lo tanto hay que convertirlo a un DataFrame
+class(Medianas)
+MedianasDf<-as.data.frame.table(Medianas)
+class(MedianasDf)
+str(MedianasDf)
+head(MedianasDf)
+#Cuantificar datos faltantes
+sum(is.na(MedianasDf))
+#Se confirma que hay cero datos faltantes
+
+#Cambiar el nombre de las columnas 
+names(MedianasDf)[names(MedianasDf)=="Var1"]<-"Binomial"
+names(MedianasDf)[names(MedianasDf)=="Freq"]<-"WDmedian"
+head(MedianasDf)
+
+#Descargar nuevo paquete
+library(stringr)
+
+#Dividir la columna "Binomial"
+MedianasDf$Genus<-str_split_fixed(MedianasDf$Binomial, "[ ]", n = 2)
+SepDf<-MedianasDf
+write.csv(SepDf, "DatosSeparados.csv")
+##Creamos el nuevo archivo para unificarlo y poder sobreescribir los nombres
+
+#Abrir nueva tabla
+Dat4<-read.csv("DatosSeparados.csv")
+head(Dat4)
+class(Dat4)
+names(Dat4)[names(Dat4)=="Genus.1"]<-"Género"
+names(Dat4)[names(Dat4)=="Genus.2"]<-"Epíteto"
+head(Dat4)
+
+#Pedir resumen de la información
+summary(Dat4)
+sum(is.na(Dat4))
+sum(is.na(Dat4$Género)) #Esto nos confirma que no hay datos faltantes
+
+#Ahora usamos la función "table" para la columna de "Géneros", 
+#indicándonos cuantas veces se repite "x" género en la columna.
+
+GenTable <-table(Dat4$Género)
+GenTable
+
+#Ahora podemos ordenar la tabla de mayor a menor usando el comando "sort"
+
+GenTable2<-sort(GenTable, decreasing=TRUE)
+
+#Ahora pedimos al nuevo objeto que nos arroje los primeros 5 resultados, 
+#que corresponden a los 5 géneros con mayor número de especies.
+
+GenTable2[1:5]
+
+#Para ver el rango de valores de la densidad de Fabaceae
+head(Dat4)
+WDsorted<-sort(Dat4$WDmedian, decreasing=TRUE)
+head(WDsorted)
+tail(WDsorted)
+
+#El rango va de 0.111 a 1.390
+
+head(Dat4)
+class(Dat4)
+
+library(lattice)
+
+#Mostrar en una gráfia como se distribuyen los datos de densidad de Fabaceae
+
+Dat4
+describe(Dat4$WDmedian)
+
+#La media de densidad para Dat4WDmedian es de 0.6928 (Mu??)
+
+a<-hist(Dat4$WDmedian, xlab = "Densidad de la madera (gcm3)", main = "Distribución de la densidad de Fabaceas", ylab = "Frecuencia", cex.axis = 1.1, col = "gray", breaks = 15)
+xfit <- seq(min(Dat4$WDmedian),max(Dat4$WDmedian), length=300)
+yfit <- dnorm(xfit, mean=mean(Dat4$WDmedian), sd=sd(Dat4$WDmedian))
+yfit <- (yfit*diff(a$mids[1:2])*length(Dat4$WDmedian))
+lines(xfit, yfit, col="blue", lwd=4)
+
+#Cargar librería de Estad. Descriptiva
+library(Hmisc)
+
+#Crear una tabla solo para los géneros deseados: sub1
+
+sub1 <- Dat4[Dat4$Género == "Acacia" | Dat4$Género == "Albizia" | Dat4$Género == "Inga" | Dat4$Género == "Swartzia" ,]
+sub1
+head(sub1)
+tail(sub1)
+str(sub1)
+#Crear nuevo csv
+
+write.csv(sub1, "MaxGens.csv")
+Dat6<-read.csv("MaxGens.csv", header=TRUE)
+Dat6
+head(Dat6)
+tail(Dat6)
+str(Dat6)
+
+#Plot
+head(Dat6)
+library(Hmisc)
+describe(Dat6[,4])
+#He descrito los datos que incluyen solo a Acacia, Albizia, Inga y Swartzia 
+#encontrando que el valor medio de la mediana es de 0.7178
+
+#Plot distribución de la WDensity para los 4 géneros, hacer subsets
+par(mfrow=c(2,2))
+str(Dat6)
+acacia<-subset(Dat6, Dat6$Género == "Acacia")
+albizia<-subset(Dat6, Dat6$Género == "Albizia")
+inga<-subset(Dat6, Dat6$Género == "Inga")
+swartzia<-subset(Dat6, Dat6$Género == "Swartzia")
+
+## Plot la WD para cada uno 
+hist(acacia$WDmedian, xlab = "Densidad de la madera (gcm3)", main = "Acacia", ylab = "Frecuencia", cex.axis = 1.1, col = "cyan", breaks = 12 )
+hist(albizia$WDmedian, xlab = "Densidad de la madera (gcm3)", main = "Albizia", ylab = "Frecuencia", cex.axis = 1.1, col = "orange", breaks = 12 )
+hist(inga$WDmedian, xlab = "Densidad de la madera (gcm3)", main = "Inga", ylab = "Frecuencia", cex.axis = 1.1, col = "pink", breaks = 12 )
+hist(swartzia$WDmedian, xlab = "Densidad de la madera (gcm3)", main = "Swartzia", ylab = "Frecuencia", cex.axis = 1.1, col = "grey", breaks = 12 )
+describe(swartzia$WDmedian)
+dev.off()
+
+##Opción usando lattice
+par(mfrow=c(2,2))
+densityplot(acacia$WDmedian, xlab = "Densidad de la madera (gcm3)", main = "Acacia", ylab = "Frecuencia", cex.axis = 1.1, col = "red", breaks = 12 )
+
+##Repesentar la variación en la densidad de la madera de los 4 géneros con más especies
+##Usando un boxplot 
+bwplot(Dat6$WDmedian~Dat6$Género, main = "Variación en la densidad de la madera", ylab = "Densidad (gcm3)", col = "red", notch = TRUE)
+
+##Tarea Parte 2
+##Datos relacionados con la región
+
+##Cargar de nuevo los datos de Fabaceae
+DatosFab
+head(DatosFab)
+tail(DatosFab)
+fabp2<-subset.data.frame(DatosFab, select = c("Binomial", "WoodDensity", "Region"))
+head(fabp2)        
+tail(fabp2)                     
+class(fabp2)
+
+##!!Se tuvo que hacer una corrección en la base de datos ya que South America se repite 
+##debido a que aparece tanto "Tropical" como "tropical". Todo se pasó a Tropical.
+
+write.csv(fabp2, "DatosFabcRegion.csv")
+fabp3<-read.csv("DatosFabcRegionCorregido.csv", header = T)
+head(fabp3)
+tail(fabp3)
+fabp3
+str(fabp3)
+
+#Ordenar los datos de menor a mayor a partir de la obtención de las 
+#medias de densidad de la madera por región
+
+fabymedian <- with(fabp3, reorder (fabp3$Region, fabp3$WoodDensity, mean))
+class(fabymedian)
+##Ahora hacer un gráfico de "cajas y bigotes" que represente la variación de 
+#la densidad por región, de acuerdo con la media.
+
+## ¿Que región tiene la densidad media más alta en fabaceae?
+bwplot(WoodDensity ~ fabymedian, main = "Densidad de la madera de Fabaceas por Región",
+ylab= "Densidad media (gcm3)", data = fabp3, notch=F, 
+alpha=1, scales=list(x=list(rot=45)))
+##Xlim es para separar el eje x entre si , aplha es para el grosor del punto que muestra
+#la mediana, y scale=list es para rotar el ángulo del eje
+
+##Ahora vamos a responder a la pregunta:
+#¿Que región tiene la densidad mediana más alta de densidad de madera de Fabaceas?
+
+meadianreg<-function(x){median=median(x)}
+meadianreg2<-tapply(fabp3$WoodDensity, fabp3$Region, meadianreg)
+head(meadianreg2)
+class(meadianreg2)
+medianregdf<-as.data.frame.table(meadianreg2)
+class(medianregdf)
+medianregdf
+
+##Cambiarle el nombre a las columnas 
+
+names(medianregdf)[names(medianregdf)=="Var1"]<-"Región"
+names(medianregdf)[names(medianregdf)=="Freq"]<-"MedianWD"
+head(medianregdf)
+medianregdf
+class(medianregdf)
+str(medianregdf)
+
+##La mayoría de los datos coinciden con la media, pero no todos.
+
+#Diagrama de cajas y bigotes en función de la variación en la mediana de la densidad
+#de la madera de fabaceas por regiones
+
+medianbxp <- with(fabp3, reorder (fabp3$Region, fabp3$WoodDensity, median))
+class(medianbxp)
+plot6<-bwplot(fabp3$WoodDensity~medianbxp, 
+main = "Mediana de la densidad de la madera en Fabaceas", xlab="Región" , 
+ylab= "Densidad (gcm3)", data = meanregdf, alpha=1, scales=list(x=list(rot=45)))
+plot6
+
+##¿Cómo se compara la densidad de especies entre los dos hábitats de Sudamérica?
+
+same<-subset(fabp3, fabp3$Region=="SA tropical"|fabp3$Region=="SA extratropical")
+same
+head(same)
+tail(same)
+
+write.csv(same, "SouthAmerica.csv")
+samedat<-read.csv("SouthAmerica.csv", header = TRUE)
+samedat
+
+andat<-bwplot(samedat$WoodDensity~samedat$Region, notch = TRUE, horizontal = F,
+ylab = "Densidad de la madera (gcm3)", main = "Fabaceas Sudamericanas - Densidad",
+xlab = "Región", alpha = 0.8, cex.axis = 0.3, aspect = "fill",
+axes = F, satplewex = 1, col="red")
+andat
+##BUSCAR CÓMO VISUALIZAR ESTADÍSTICAS QUE SE UTILIZARON PARA EL BOXPLOT de lattice
+
+#¿Cuántas especies hay por región geográfica en la base? 
+
+sp.region<-subset(fabp3, select =c("Binomial", "Region"))
+sp.region2<-unique(sp.region)
+summary(sp.region2$Region)
+class(sp.region2)
+head(sp.region2)
+tail(sp.region2)
+length(sp.region2[,1])
+##Revisar que no se estén subestimando las especies por región #Verificado!! Todo bien. No se subestima.
+write.csv(sp.region2, "SppPorRegion.csv")
+region.revis<-read.csv("SppPorRegion.csv")
+region.revis
+answer.1<-table(region.revis$Region)
+answer.2<-as.data.frame.table(answer.1)
+answer.2
+
+answer.3<-order(answer.2$Freq)
+answer.3
+answer.4<-answer.2[answer.3, ]
+answer.4
+##
+#¿Cuál es el género de Fabaceae con más especies en México?
+##
+head(fabp3)
+fab.mex<-subset(fabp3, fabp3$Region == "Mexico", select=c("Binomial", "Region", "WoodDensity"))
+head(fab.mex)
+fab.mex$v<-str_split_fixed(fab.mex$Binomial, "[ ]", n = 2)
+head(fab.mex)
+fab.mex1<-as.data.frame.table(fab.mex)
+names(fab.mex1)<-c("1","2","Binomial","Region", "WoodDensity", "Genus","Epit")
+head(fab.mex1)
+fab.mex2<-subset(fab.mex1, select = c("Genus", "Epit", "WoodDensity"))
+head(fab.mex2)
+
+write.csv(fab.mex2, "EspeciesMex1.csv")
+fab.mex3<-read.csv("EspeciesMex1.csv")
+fab.mex3
+##
+#¿Cuál es el género con más especies en México?
+##
+fab.mex3<-fab.mex3[!duplicated(fab.mex3$Epit),]
+max.gen.mex<-table(fab.mex3$Genus)
+max.gen.mex
+max.gen.mex.df<-as.data.frame.table(max.gen.mex)
+max.gen.mex.df
+mgn.ord<-order(max.gen.mex.df$Freq)
+mgn.ord.1<-max.gen.mex.df[mgn.ord, ]
+mgn.ord.1
+#Respuesta: Lonchocarpus con 7 especies
+
+##Calcular maderas con mayor densidad de Fabaceae
+#Ver cuál es la región con especies de más alta densidad
+fabp3
+wd1<-subset(fabp3, fabp3$WoodDensity>1)
+wd1
+wd2<-wd1[!duplicated(wd1$Binomial),]
+wd3<-table(wd2$Region)
+wd3
+wd4<-as.data.frame.table(wd3)
+wd4
+
+##¿Cuál es el género que incluye especies de más alta densidad?
+wd1
+head(wd1)
+wd1$n<-str_split_fixed(wd1$Binomial, "[ ]", n = 2)
+head(wd1)
+mgd1<-as.data.frame.table(wd1)
+head(mgd1)
+mgd2<-subset(mgd1, select=c("Freq.n.1", "Freq.n.2", "Freq.WoodDensity", "Freq.Region"))
+head(mgd2)
+names(mgd2)<-c("Gen", "Epi", "WD", "Region")
+head(mgd2)
+mgd3<-mgd2[!duplicated(mgd2$Epi),]
+head(mgd3)
+mgd4<-table(mgd3$Gen)
+mgd5<-as.data.frame.table(mgd4)
+mgd5
+##########
+class(mgd5)
+order(mgd5$Freq, decreasing = T)
+head(mgd5)
+##FORMA MÁS SENCILLA DE ORDENAR LOS DATOS DE UN DATA FRAME!!!!!!! YUPIIII--11
+
+###¿Qué generos de Fabaceae son los que presentan mayor variación?
+
+##1.- Cargar Base de datos completa solo Fabaceae
+##Dividir el Binomial en Género y epíteto
+##2.- Subset seleccionando "Género" "WDensity"
+##3.- Usar tapply para sd por género 
+##4.- Disfrutar el resultado 
+
+head(fabp3)
+FabFab<-subset(fabp3, select=c("Binomial", "WoodDensity"))
+FabFab$Genus<-str_split_fixed(FabFab$Binomial, "[ ]", n=2)
+FabFab
+write.csv(FabFab, "FabFab.csv")
+FabFab2<-read.csv("FabFab.csv", header = T)
+head(FabFab2)
+names(FabFab2)[names(FabFab2)=="Genus.1"]<-"Genero"
+names(FabFab2)[names(FabFab2)=="Genus.2"]<-"Epiteto"
+head(FabFab2)
+SD<- function(x){sd=sd(x)}
+FabFab3<-tapply(FabFab2$WoodDensity, FabFab2$Genero, SD)
+head(FabFab3)
+str(FabFab3)
+FabFab4<-as.data.frame.table(FabFab3)
+head(FabFab4)
+names(FabFab4)[names(FabFab4)=="Var1"]<-"Genero"
+names(FabFab4)[names(FabFab4)=="Freq"]<-"SD"
+head(FabFab4)
+tail(FabFab4)
+
+Fab.sort<-order(FabFab4$SD)
+Fab.sort
+FabSorted<-FabFab4[Fab.sort, ]
+FabSorted
+Fab.Sorted2<-na.omit(FabSorted)
+Fab.Sorted2
+
+##Los géneros con mayor variación son Bocoa, Baphia, 
+#Chloroleucon, Poecilanthe, Bauhinia, Machaerium
+
+##16.	Desarrolla una función de nombre volumen.area.cilindro que permita
+#al usuario calcular ya sea el área o el volumen (el usuario lo especificará
+#a partir del radio y la altura de esta figura geométrica
+
+volumen.area.cilindro<-function(circulo=NULL, r=NULL, h=NULL) {
+  my.samples <- switch(circulo,
+                       "A"= (2*pi*(r^2))+(2*pi*r*h),
+                       "V"= pi*r^2*h)
+}
+
+m1area<-volumen.area.cilindro(circulo="A", r=5, h=3)
+m1area
+m1volu<-volumen.area.cilindro(circulo="V", r=5, h=3)
+m1volu
+
+##Desarrolla una función de nombre int.conf que permita al usuario estimRa
+#intervalos de confianza para la media suponiendo una sigma poblacional desconocida. 
+
+Int..conf<-function(dat=NULL, conf=NULL)
+  {
+  sd<-sd(dat)
+  ee<-sd/sqrt(length(dat)) 
+  xbarra<-mean(dat),
+  E<-qt(((1-conf)/2), 
+  ((length(dat))-1, lower.tail= F)*ee
+  return(xbarra+(c(-E,E)))}
+
